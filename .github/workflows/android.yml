@@ -1,4 +1,4 @@
-name: Build APK (Fast)
+name: Build APK Release (Tag v*)
 
 on:
   push:
@@ -7,67 +7,41 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04   # 🔥 FIX CRITICO (NON 24)
+    runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      # 🔥 Cache buildozer (ENORME boost)
-      - name: Cache buildozer
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            .buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
 
-      # 🔥 Java giusto (fix sdkmanager error)
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          git zip unzip \
+          openjdk-17-jdk \
+          build-essential \
+          libffi-dev libssl-dev
 
-      # 🔥 Dipendenze Ubuntu 22 FIXATE
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            build-essential \
-            git zip unzip openjdk-17-jdk \
-            python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libffi-dev \
-            libssl-dev
+    - name: Install Buildozer
+      run: |
+        python -m pip install --upgrade pip
+        pip install buildozer cython==0.29.36
 
-      # 🔥 Fix libffi (ERRORE che avevi)
-      - name: Fix libffi
-        run: |
-          sudo apt install -y libltdl-dev
+    - name: Build APK with Buildozer
+      run: |
+        buildozer -v android debug
 
-      # 🔥 Python deps (versioni STABILI)
-      - name: Install Python deps
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install cython==0.29.36
-          pip install buildozer
-          pip install python-for-android==2024.1.21
+    - name: List output files
+      run: ls -R bin
 
-      # 🔥 Build APK
-      - name: Build APK
-        run: |
-          buildozer android debug
-
-      # 🔥 Upload APK
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: bin/*.apk
-
-      # 🔥 Release automatica
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: bin/*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload APK to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: bin/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
