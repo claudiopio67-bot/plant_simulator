@@ -1,5 +1,14 @@
 [app]
 
+# 📁 cartella del tuo codice
+source.dir = .
+
+# 🔥 versione app (obbligatoria)
+version = 0.1
+
+# (opzionale ma consigliato)
+package.name = plantsimulator
+package.domain = org.test
 title = Plant Simulator
 package.name = plantsimulator
 package.domain = com.tuo.nome
