@@ -1,26 +1,21 @@
-name: Build APK Release (Tag v*)
+name: 🚀 Build APK Manual
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    - name: Install system dependencies
+    - name: System deps (ONLY OS stuff)
       run: |
-        sudo apt update
         sudo apt install -y \
           git zip unzip \
           openjdk-17-jdk \
@@ -29,19 +24,15 @@ jobs:
 
     - name: Install Buildozer
       run: |
-        python -m pip install --upgrade pip
+        pip install --upgrade pip
         pip install buildozer cython==0.29.36
 
-    - name: Build APK with Buildozer
+    - name: Build APK (SDK handled automatically)
       run: |
         buildozer -v android debug
 
-    - name: List output files
-      run: ls -R bin
-
-    - name: Upload APK to GitHub Release
-      uses: softprops/action-gh-release@v2
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
       with:
-        files: bin/*.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        name: APK
+        path: bin/*.apk
