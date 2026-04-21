@@ -1,5 +1,5 @@
 [app]
-title = MyApp
+title = Plant Simulator
 package.name = myapp
 package.domain = org.example
 
