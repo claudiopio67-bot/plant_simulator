@@ -1,26 +1,13 @@
 [app]
-title = Plant Simulator
-package.name = plantsimulator
-package.domain = org.test
-
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
-
-version = 0.1
+version = 1.0
 
 requirements = python3,kivy==2.3.0
 
-orientation = portrait
-fullscreen = 0
-
-# Android
 android.api = 34
 android.minapi = 21
-android.sdk = 34
-android.ndk = 25b
+android.arch = arm64-v8a
 
-# Fix compatibilità
-android.ndk_api = 21
-
-# Logging
-log_level = 2
+android.build_tools_version = 34.0.0
+android.skip_update = True
+android.accept_sdk_license = True
