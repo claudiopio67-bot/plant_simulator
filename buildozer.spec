@@ -1,33 +1,26 @@
 [app]
-
-# 📁 cartella del tuo codice
-source.dir = .
-
-# 🔥 versione app (obbligatoria)
-version = 0.1
-
-# (opzionale ma consigliato)
+title = Plant Simulator
 package.name = plantsimulator
 package.domain = org.test
-title = Plant Simulator
 
+source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
+
+version = 0.1
 
 requirements = python3,kivy==2.3.0
 
-# IMPORTANTISSIMO: riduce peso APK
-android.archs = arm64-v8a
+orientation = portrait
+fullscreen = 0
 
-# Android target moderno
+# Android
 android.api = 34
 android.minapi = 21
+android.sdk = 34
+android.ndk = 25b
 
-# accetta licenze
-android.accept_sdk_license = True
+# Fix compatibilità
+android.ndk_api = 21
 
-# fix toolchain moderna
-p4a.branch = develop
-
-# debug più leggero
+# Logging
 log_level = 2
-warn_on_root = 1
