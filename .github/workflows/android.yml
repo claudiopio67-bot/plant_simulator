@@ -1,94 +1,73 @@
-name: Build Kivy APK
+name: Build APK (Fast)
 
 on:
   push:
-    branches: [ main ]
     tags:
       - "v*"
-  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04   # 🔥 FIX QUI
-
-    env:
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+    runs-on: ubuntu-22.04   # 🔥 FIX CRITICO (NON 24)
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Cache buildozer
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.buildozer
-          ~/.gradle
-        key: ${{ runner.os }}-buildozer
+      # 🔥 Cache buildozer (ENORME boost)
+      - name: Cache buildozer
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            .buildozer
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
 
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: 17
+      # 🔥 Java giusto (fix sdkmanager error)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-    - name: Install deps
-      run: |
-        sudo apt install -y \
-          python3-pip unzip wget \
-          autoconf automake libtool \
-          pkg-config zlib1g-dev \
-          libncurses5-dev libncursesw5-dev \
-          libtinfo5 cmake ninja-build
+      # 🔥 Dipendenze Ubuntu 22 FIXATE
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            git zip unzip openjdk-17-jdk \
+            python3-pip autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libffi-dev \
+            libssl-dev
 
-    - name: Install Python deps
-      run: |
-        pip install --upgrade pip
-        pip install buildozer cython==0.29.36 python-for-android==2024.1.21
+      # 🔥 Fix libffi (ERRORE che avevi)
+      - name: Fix libffi
+        run: |
+          sudo apt install -y libltdl-dev
 
-    - name: Setup Android SDK
-      run: |
-        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-        cd $ANDROID_SDK_ROOT/cmdline-tools
+      # 🔥 Python deps (versioni STABILI)
+      - name: Install Python deps
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install cython==0.29.36
+          pip install buildozer
+          pip install python-for-android==2024.1.21
 
-        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        unzip commandlinetools-linux-11076708_latest.zip
+      # 🔥 Build APK
+      - name: Build APK
+        run: |
+          buildozer android debug
 
-        mv cmdline-tools latest
+      # 🔥 Upload APK
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: bin/*.apk
 
-    - name: Add SDK to PATH
-      run: |
-        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-
-    - name: Accept licenses (manual)
-      run: |
-        mkdir -p $ANDROID_SDK_ROOT/licenses
-        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
-        echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
-
-    - name: Install SDK
-      run: |
-        sdkmanager \
-          "platform-tools" \
-          "platforms;android-34" \
-          "build-tools;34.0.0"
-
-    - name: Fix Buildozer licenses
-      run: |
-        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-        cp -r $ANDROID_SDK_ROOT/licenses/* ~/.buildozer/android/platform/android-sdk/licenses/ || true
-
-    - name: Build APK
-      run: buildozer android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: apk
-        path: bin/*.apk
-
-    - name: Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: bin/*.apk
+      # 🔥 Release automatica
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bin/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
