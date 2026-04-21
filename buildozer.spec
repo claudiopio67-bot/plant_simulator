@@ -10,8 +10,6 @@ version = 0.1
 package.name = plantsimulator
 package.domain = org.test
 title = Plant Simulator
-package.name = plantsimulator
-package.domain = com.tuo.nome
 
 source.include_exts = py,png,jpg,kv,atlas
 
