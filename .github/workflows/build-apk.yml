@@ -1,0 +1,90 @@
+name: Build APK (Zero Error System)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    env:
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.10
+
+      - name: System dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+          git zip unzip openjdk-17-jdk \
+          python3-pip autoconf libtool pkg-config \
+          zlib1g-dev libncurses5-dev libncursesw5-dev \
+          cmake build-essential
+
+      - name: Install Buildozer
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython
+
+      # ---------------------------
+      # ANDROID SDK (STABILE)
+      # ---------------------------
+      - name: Install Android SDK (no prompts)
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+
+          curl -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip tools.zip
+          mv cmdline-tools latest
+
+      - name: Fix PATH
+        run: |
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+      # ---------------------------
+      # 🔥 FIX 1: licenze automatiche
+      # ---------------------------
+      - name: Accept Android licenses (IMPORTANT)
+        run: |
+          yes | sdkmanager --licenses || true
+
+      # ---------------------------
+      # 🔥 FIX 2: installa SOLO versioni stabili
+      # (evita build-tools 37 bug)
+      # ---------------------------
+      - name: Install Android packages
+        run: |
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;33.0.2"
+
+      # ---------------------------
+      # BUILD
+      # ---------------------------
+      - name: Build APK with Buildozer
+        run: |
+          export ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
+          buildozer -v android debug
+
+      # ---------------------------
+      # ARTIFACT
+      # ---------------------------
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: bin/*.apk
